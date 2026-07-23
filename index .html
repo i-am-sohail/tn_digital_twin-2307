@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tamil Nadu Digital Twin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root{
+    --tn-maroon:#8a1538; --tn-maroon-bg:#f8e9ee;
+    --tn-green:#0b6b3a; --tn-green-bg:#e6f3ec;
+    --tn-gold:#c99a2e; --tn-gold-bg:#faf1de;
+    --tn-red:#b3261e; --tn-red-bg:#fbe9e8;
+    --text-primary:#1a1a1a; --text-secondary:#666; --text-muted:#999;
+    --surface-1:#f5f5f5; --surface-2:#ffffff; --border:#e0e0e0; --border-strong:#ccc;
+    --radius:10px; --font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    --gradient-start:#fdf8f2; --gradient-end:#f3e8dd;
+  }
+
+  html.theme-dark {
+    --text-primary:#eae6e2; --text-secondary:#b3aca6; --text-muted:#8a827c;
+    --surface-1:#232020; --surface-2:#1a1717; --border:#3a3432; --border-strong:#4a4340;
+    --gradient-start:#171414; --gradient-end:#1f1a19;
+    --tn-maroon-bg:#2d141b; --tn-green-bg:#122b1c; --tn-gold-bg:#2d2514; --tn-red-bg:#341615;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--font-sans);background:linear-gradient(160deg,var(--gradient-start) 0%,var(--gradient-end) 100%);min-height:100vh;color:var(--text-primary);padding:20px;transition: background 0.3s ease, color 0.3s ease;}
+  .container{max-width:1200px;margin:0 auto;}
+  .dt-header{padding:1.25rem 1.5rem;border-bottom:3px solid var(--tn-maroon);margin-bottom:1.5rem;background:var(--surface-2);border-radius:var(--radius) var(--radius) 0 0;box-shadow:0 2px 10px rgba(0,0,0,.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .dt-title{font-size:22px;font-weight:600;color:var(--tn-maroon);}
+  .dt-subtitle{font-size:12.5px;color:var(--text-muted);margin-top:2px;}
+  .dt-header-right {display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+  .dt-clock{font-size:13px;color:var(--text-secondary);text-align:right;}
+
+  .theme-toggle-btn {
+    background: var(--surface-1);
+    color: var(--text-primary);
+    border: 1px solid var(--border-strong);
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+  }
+  .theme-toggle-btn:hover { border-color: var(--tn-maroon); }
+
+  .live-badge{display:inline-flex;align-items:center;gap:5px;background:var(--tn-green-bg);color:var(--tn-green);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin-top:4px;}
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--tn-green);animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+  .selector-card{background:var(--surface-2);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+  .selector-grid{display:grid;grid-template-columns:1fr;gap:1rem;align-items:end;max-width:420px;}
+  .form-group{display:flex;flex-direction:column;}
+  .form-group label{font-size:12px;font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-secondary);}
+  select,input,textarea{padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-size:14px;background:var(--surface-1);color:var(--text-primary);font-family:var(--font-sans);}
+  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--tn-maroon);}
+  .btn{padding:10px 22px;background:var(--tn-maroon);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;transition:.15s;}
+  .btn:hover{background:#6e0f2b;}
+  .btn:disabled{background:var(--border-strong);cursor:not-allowed;}
+  .btn.secondary{background:var(--tn-green);}
+  .btn.secondary:hover{background:#08542d;}
+  .btn.small{padding:6px 12px;font-size:12px;}
+
+  .msg{padding:10px 14px;border-radius:8px;margin-bottom:1rem;font-size:13.5px;}
+  .msg.error{background:var(--tn-red-bg);color:var(--tn-red);border:1px solid #f0c6c3;}
+  .msg.info{background:var(--tn-gold-bg);color:#7a5c14;border:1px solid #ecd8a4;}
+  .msg.success{background:var(--tn-green-bg);color:var(--tn-green);border:1px solid #c2e9d8;}
+
+  .tabs{display:flex;gap:4px;margin-bottom:1.25rem;border-bottom:1px solid var(--border);overflow-x:auto;}
+  .tab{padding:10px 16px;font-size:13.5px;font-weight:500;color:var(--text-secondary);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}
+  .tab.active{color:var(--tn-maroon);border-bottom-color:var(--tn-maroon);}
+  .panel{display:none;background:var(--surface-2);border-radius:var(--radius);padding:1.5rem;box-shadow:0 2px 10px rgba(0,0,0,.06);min-height:200px;}
+  .panel.active{display:block;}
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:1.5rem;}
+  .kpi{background:var(--surface-1);border-radius:8px;padding:14px;border:1px solid var(--border);}
+  .kpi .label{font-size:11.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px;}
+  .kpi .value{font-size:20px;font-weight:700;}
+  .kpi .unit{font-size:12px;color:var(--text-secondary);font-weight:400;}
+  .kpi .note{font-size:10.5px;color:var(--tn-gold);margin-top:3px;}
+
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
+  @media (max-width:800px){.two-col{grid-template-columns:1fr;}}
+
+  .link-card{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;background:var(--surface-1);}
+  .link-card a{color:var(--tn-maroon);font-weight:600;text-decoration:none;font-size:14px;}
+  .link-card a:hover{text-decoration:underline;}
+  .link-card .desc{font-size:12.5px;color:var(--text-secondary);margin-top:2px;}
+
+  .section-heading{font-size:14px;font-weight:700;color:var(--text-primary);margin:1.25rem 0 .6rem;}
+  .section-heading:first-child{margin-top:0;}
+
+  .ai-key-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;}
+  .ai-key-row input{flex:1;min-width:220px;}
+
+  .ai-presets-group{margin-bottom:1.5rem;}
+  .ai-presets-group-title{font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px;margin-top:1rem;}
+  .ai-presets-group-title:first-child{margin-top:0;}
+
+  .ai-presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:0;}
+  .ai-preset{font-size:12.5px;padding:6px 12px;border:1px solid var(--border-strong);border-radius:20px;background:var(--surface-1);cursor:pointer;color:var(--text-secondary);transition:all 0.2s ease;}
+  .ai-preset:hover{border-color:var(--tn-maroon);color:var(--tn-maroon);background:var(--tn-maroon-bg);}
+
+  .compare-badge{display:inline-flex;align-items:center;gap:6px;background:var(--tn-gold-bg);color:var(--text-primary);padding:6px 10px;border-radius:6px;font-size:12px;font-weight:500;margin-bottom:1rem;}
+  .compare-badge-close{cursor:pointer;font-weight:700;color:var(--text-muted);}
+  .compare-badge-close:hover{color:var(--tn-maroon);}
+
+  .ai-response-container{margin-top:1rem;}
+  .ai-response{margin-top:0;padding:14px;border-radius:8px;background:var(--tn-green-bg);color:#0b3d20;font-size:14px;line-height:1.6;display:none;position:relative;}
+  html.theme-dark .ai-response{background:#16281e;color:#bfe8cf;}
+
+  .ai-response h1, .ai-response h2, .ai-response h3{margin-top:12px;margin-bottom:8px;font-weight:700;}
+  .ai-response h1{font-size:18px;}
+  .ai-response h2{font-size:16px;}
+  .ai-response h3{font-size:14px;}
+  .ai-response ul, .ai-response ol{margin:10px 0 10px 20px;}
+  .ai-response li{margin-bottom:6px;}
+  .ai-response strong{font-weight:700;}
+  .ai-response em{font-style:italic;}
+  .ai-response code{background:rgba(0,0,0,0.1);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:13px;}
+  .ai-response blockquote{border-left:3px solid rgba(0,0,0,0.2);padding-left:12px;margin:10px 0;opacity:0.9;}
+
+  .ai-response.loading{color:var(--text-muted);background:var(--surface-1);}
+
+  .ai-response-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,0.1);}
+  .ai-response-actions button{background:rgba(0,0,0,0.1);border:none;color:inherit;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:500;transition:all 0.2s;}
+  .ai-response-actions button:hover{background:rgba(0,0,0,0.2);}
+
+  .loading-spinner{display:inline-flex;align-items:center;gap:6px;}
+  .spinner{width:14px;height:14px;border:2px solid rgba(0,0,0,0.2);border-top-color:currentColor;border-radius:50%;animation:spin 0.8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .ai-history{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);}
+  .history-item{padding:10px 12px;background:var(--surface-1);border-radius:6px;margin-bottom:8px;font-size:12.5px;cursor:pointer;transition:all 0.2s;border-left:3px solid var(--border);}
+  .history-item:hover{background:var(--tn-maroon-bg);border-left-color:var(--tn-maroon);}
+  .history-item-query{font-weight:600;color:var(--text-primary);margin-bottom:3px;}
+  .history-item-time{font-size:11px;color:var(--text-muted);}
+
+  .followup-section{margin-top:1rem;padding:10px 12px;background:rgba(139,21,56,0.05);border-radius:6px;border-left:3px solid var(--tn-maroon);}
+  .followup-title{font-size:11px;font-weight:700;color:var(--tn-maroon);text-transform:uppercase;margin-bottom:8px;}
+  .followup-btn{display:block;width:100%;text-align:left;padding:8px 10px;background:var(--surface-1);border:1px solid var(--border);border-radius:4px;margin-bottom:6px;cursor:pointer;font-size:12.5px;color:var(--text-primary);transition:all 0.2s;}
+  .followup-btn:last-child{margin-bottom:0;}
+  .followup-btn:hover{border-color:var(--tn-maroon);background:var(--tn-maroon-bg);}
+
+  .footer-note{font-size:11.5px;color:var(--text-muted);text-align:center;margin-top:1.5rem;line-height:1.6;}
+  .footer-note a{color:var(--tn-maroon);}
+
+  .about-card{background:var(--surface-2);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+  .about-card h2{font-size:17px;margin-bottom:.5rem;color:var(--tn-maroon);}
+  .about-card p{font-size:13.5px;color:var(--text-secondary);line-height:1.65;margin-bottom:.9rem;}
+  .about-toggle{font-size:12.5px;color:var(--tn-maroon);cursor:pointer;font-weight:600;background:none;border:none;padding:0;margin-bottom:.5rem;}
+  .sdg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:.75rem;}
+  .sdg-chip{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:8px;background:var(--surface-1);border:1px solid var(--border);}
+  .sdg-num{flex-shrink:0;width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;}
+  .sdg-text .sdg-name{font-size:12.5px;font-weight:700;margin-bottom:2px;}
+  .sdg-text .sdg-desc{font-size:11.5px;color:var(--text-muted);line-height:1.4;}
+  .sdg-honesty{font-size:11.5px;color:var(--text-muted);margin-top:.9rem;font-style:italic;}
+
+  .weather-main-card{background:linear-gradient(135deg,#4f8ef7 0%,#2b5fc7 100%);color:#fff;border-radius:12px;padding:2rem;margin-bottom:1.5rem;box-shadow:0 4px 15px rgba(0,0,0,0.15);}
+  .weather-temp{font-size:48px;font-weight:700;margin-bottom:4px;}
+  .weather-condition{font-size:16px;font-weight:600;opacity:.95;margin-bottom:10px;}
+  .weather-updated{font-size:12px;opacity:.8;}
+  .weather-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
+  .weather-detail{background:var(--surface-1);border-radius:10px;padding:14px;border:1px solid var(--border);text-align:center;}
+  .weather-detail .label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);margin-bottom:6px;font-weight:700;}
+  .weather-detail .value{font-size:20px;font-weight:700;color:var(--text-primary);}
+
+  .aqi-main-card{background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;border-radius:12px;padding:2rem;margin-bottom:1.5rem;box-shadow:0 4px 15px rgba(0,0,0,0.15);}
+  .aqi-value{font-size:48px;font-weight:700;margin-bottom:8px;}
+  .aqi-label{font-size:18px;font-weight:600;margin-bottom:12px;}
+  .aqi-status{font-size:14px;opacity:0.9;margin-bottom:8px;}
+  .aqi-last-update{font-size:12px;opacity:0.8;}
+  .aqi-good{background:linear-gradient(135deg, #11b981 0%, #059669 100%);}
+  .aqi-moderate{background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);}
+  .aqi-unhealthy-sensitive{background:linear-gradient(135deg, #f97316 0%, #ea580c 100%);}
+  .aqi-unhealthy{background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%);}
+  .aqi-very-unhealthy{background:linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);}
+  .aqi-hazardous{background:linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);}
+  .pollutants-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:1.5rem;}
+  .pollutant-card{background:var(--surface-1);border-radius:10px;padding:14px;border:1px solid var(--border);text-align:center;}
+  .pollutant-name{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:6px;font-weight:700;}
+  .pollutant-value{font-size:22px;font-weight:700;color:var(--text-primary);margin-bottom:3px;}
+  .pollutant-unit{font-size:11px;color:var(--text-secondary);}
+
+  .no-data{padding:40px 20px;text-align:center;color:var(--text-muted);}
+  .no-data-icon{font-size:48px;margin-bottom:12px;}
+  .no-data-text{font-size:14px;margin-bottom:8px;}
+  .loading-inline{display:flex;align-items:center;justify-content:center;gap:10px;padding:20px;color:var(--text-muted);}
+  .info-box{background:var(--tn-gold-bg);border-left:4px solid var(--tn-gold);padding:12px;border-radius:6px;margin-bottom:1.5rem;font-size:13px;color:var(--text-primary);}
+  .info-box strong{color:var(--tn-gold);}
+
+  .district-header{background:linear-gradient(135deg, var(--tn-maroon) 0%, #6e0f2b 100%);color:#fff;border-radius:12px;padding:2rem;margin-bottom:2rem;box-shadow:0 4px 15px rgba(0,0,0,0.15);}
+  .district-header h1{font-size:32px;font-weight:700;margin-bottom:8px;}
+  .district-header p{font-size:14px;opacity:0.9;margin-bottom:4px;}
+  .district-header-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px;margin-top:1.5rem;}
+  .header-meta-item{display:flex;flex-direction:column;}
+  .header-meta-label{font-size:11px;opacity:0.8;text-transform:uppercase;letter-spacing:.05em;}
+  .header-meta-value{font-size:20px;font-weight:700;margin-top:4px;}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:2rem;}
+  .stat-card{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+  .stat-icon{font-size:32px;margin-bottom:8px;}
+  .stat-value{font-size:24px;font-weight:700;color:var(--tn-maroon);margin-bottom:4px;}
+  .stat-label{font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.03em;}
+  .stat-card.accent{border-top:4px solid var(--tn-maroon);}
+  .stat-card.accent2{border-top:4px solid var(--tn-green);}
+  .stat-card.accent3{border-top:4px solid var(--tn-gold);}
+
+  .data-section{margin-bottom:2rem;}
+  .data-section-title{font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+  .data-grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;}
+  .data-card{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+  .data-card-title{font-size:13px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.03em;margin-bottom:12px;}
+  .data-card-content{display:grid;gap:10px;}
+  .data-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+  .data-row:last-child{border-bottom:none;}
+  .data-row-label{font-size:13px;color:var(--text-secondary);}
+  .data-row-value{font-size:14px;font-weight:700;color:var(--text-primary);}
+
+  .literacy-indicator{display:inline-block;padding:8px 14px;border-radius:20px;font-weight:600;font-size:13px;margin:0 4px 4px 0;}
+  .literacy-good{background:var(--tn-green-bg);color:var(--tn-green);}
+  .literacy-moderate{background:var(--tn-gold-bg);color:#7a5c14;}
+  .literacy-poor{background:var(--tn-red-bg);color:var(--tn-red);}
+
+  .comparison-note{background:var(--tn-gold-bg);border-left:4px solid var(--tn-gold);padding:12px;border-radius:6px;margin-top:1rem;font-size:12px;color:#7a5c14;}
+  .download-section{margin-top:2rem;padding-top:2rem;border-top:1px solid var(--border);}
+  .download-section button{margin-right:8px;margin-bottom:8px;}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="dt-header">
+    <div>
+      <div class="dt-title">🪷 Tamil Nadu Digital Twin</div>
+      <div class="dt-subtitle">An Atal Tinkering Lab project · AI-assisted decision-making for the Sustainable Development Goals</div>
+      <div class="live-badge"><span class="live-dot"></span> Live where available</div>
+    </div>
+    <div class="dt-header-right">
+      <div class="dt-clock">Last updated: <span id="clock">—</span></div>
+      <button class="theme-toggle-btn" onclick="toggleTheme()">
+        <i class="fas fa-sun"></i> Light
+      </button>
+    </div>
+  </div>
+
+  <div class="selector-card">
+    <div class="selector-grid">
+      <div class="form-group">
+        <label for="district-select">Select a district</label>
+        <select id="district-select" onchange="changeDistrict()">
+          <option value="">— Loading districts... —</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="overview" onclick="switchTab('overview')">📊 District Overview</button>
+    <button class="tab" data-tab="weather" onclick="switchTab('weather')">🌤️ Weather</button>
+    <button class="tab" data-tab="air-quality" onclick="switchTab('air-quality')">💨 Air Quality</button>
+    <button class="tab" data-tab="resources" onclick="switchTab('resources')">💧 Water &amp; Energy</button>
+    <button class="tab" data-tab="insights" onclick="switchTab('insights')">🤖 AI Insights</button>
+    <button class="tab" data-tab="about" onclick="switchTab('about')">ℹ️ About</button>
+  </div>
+
+  <div id="overview" class="panel active">
+    <div id="overview-content">
+      <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+        <div style="font-size:48px;margin-bottom:16px;">📊</div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:8px;">Select a District</div>
+        <div style="font-size:14px;">Choose a district from the dropdown above to view its real population, area, density, and literacy data.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="weather" class="panel">
+    <div id="weather-content">
+      <div class="no-data"><div class="no-data-icon">🌤️</div><div class="no-data-text">Select a district to see live weather.</div></div>
+    </div>
+  </div>
+
+  <div id="air-quality" class="panel">
+    <div id="air-quality-content">
+      <div class="no-data"><div class="no-data-icon">💨</div><div class="no-data-text">Select a district to see live air quality.</div></div>
+    </div>
+  </div>
+
+  <div id="resources" class="panel">
+    <div id="resources-content"></div>
+  </div>
+
+  <div id="insights" class="panel">
+    <div id="ai-panel-content">
+      <div class="no-data"><div class="no-data-icon">🤖</div><div class="no-data-text">Select a district first, then come back here to ask the AI about it.</div></div>
+    </div>
+  </div>
+
+  <div id="about" class="panel">
+    <div class="about-card">
+      <h2>🎯 What is a Digital Twin?</h2>
+      <p>
+        A <strong>digital twin</strong> is a real-time, data-driven virtual representation of a physical place — in this case, a Tamil Nadu district. This dashboard combines official district statistics with live environmental data and an AI reasoning engine to turn real numbers into actionable insights for planning and policy.
+      </p>
+      <button class="about-toggle" onclick="toggleAbout('sdg')">+ Read more about the SDGs</button>
+      <div id="about-sdg" style="display:none;">
+        <p>
+          This project links district development data to the UN Sustainable Development Goals (SDGs) — a shared global call to end poverty, protect the planet, and ensure peace and prosperity by 2030. Tamil Nadu's digital twin helps identify which SDGs matter most for each district and how progress can be tracked.
+        </p>
+        <div class="sdg-grid" id="sdg-display"></div>
+        <p class="sdg-honesty">This is a school AI project, built to explore how real data + AI can help with public planning. The AI insights are decision-support tools: they reason from real data but aren't official government guidance.</p>
+      </div>
+      <button class="about-toggle" onclick="toggleAbout('data')">+ Where does the data come from?</button>
+      <div id="about-data" style="display:none;">
+        <p>
+          Population, area, and literacy figures come from Government of Tamil Nadu district data and Census 2011 (India's most recent literacy census). Weather comes live from OpenWeatherMap. Air quality comes live from WAQI, which aggregates real CPCB monitoring stations. Full technical details are in this project's <code>API_INTEGRATION.md</code> file.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    Built with ❤️ at an Atal Tinkering Lab · Powered by the Gemini API · Your Gemini API key stays only in this browser tab for this session
+  </div>
+
+</div>
+
+<script>
+  // ============================================================
+  // CONFIG — see API_INTEGRATION.md for exactly how each of these is used.
+  // ============================================================
+
+  // OpenWeatherMap: free tier, low-stakes, safe to embed client-side.
+  // Get your own free key at https://openweathermap.org/api and paste it here.
+  const OPENWEATHER_KEY = '5f8e03fcbe1faf6be53e8c4919a4b114';
+
+  // WAQI: free tier, low-stakes, safe to embed client-side.
+  // Get your own free token at https://aqicn.org/data-platform/token/ and paste it here.
+  const WAQI_TOKEN = '4ae0824f8a905c61dc1161a25e647c3b442ef8d1dd1ce056cf11228e2bfa6298';
+
+  // Gemini key is deliberately NOT embedded here and NOT persisted
+  // to localStorage — it's billed per request, so each visitor pastes their
+  // own and it only lives in this JS variable for the current tab/session.
+  let geminiKey = '';
+
+  let DISTRICTS = [];         // populated from district.json at load time
+  let current = null;
+  let queryHistory = JSON.parse(localStorage.getItem('ai-history') || '[]');
+  let followupSuggestions = [];
+
+  const sdgs = [
+    {num:3,color:'#E63946',name:'Good Health & Well-being'},
+    {num:4,color:'#F77F00',name:'Quality Education'},
+    {num:6,color:'#26B6E8',name:'Clean Water & Sanitation'},
+    {num:8,color:'#06A77D',name:'Decent Work & Economic Growth'},
+    {num:11,color:'#FFB703',name:'Sustainable Cities & Communities'},
+    {num:13,color:'#3A7D44',name:'Climate Action'}
+  ];
+
+  // ============================================================
+  // INIT
+  // ============================================================
+  async function init(){
+    loadTheme();
+    updateClock();
+    setInterval(updateClock, 1000);
+    renderSDGs();
+    renderResourcesPanel();
+    await loadDistricts();
+  }
+
+  async function loadDistricts(){
+    const sel = document.getElementById('district-select');
+    try{
+      const res = await fetch('district.json');
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      DISTRICTS = data.districts || [];
+      DISTRICTS.sort((a,b)=>a.name.localeCompare(b.name));
+      const opts = DISTRICTS.map(d=>`<option value="${d.code}">${d.name}</option>`).join('');
+      sel.innerHTML = '<option value="">— Choose —</option>' + opts;
+    }catch(err){
+      sel.innerHTML = '<option value="">— Could not load district.json —</option>';
+      showGlobalMessage(
+        `⚠️ Could not load district.json: ${err.message}. Make sure district.json is in the same folder as index.html and you're serving this over http:// (e.g. "python3 -m http.server 8000"), not opening the file directly.`,
+        'error'
+      );
+    }
+  }
+
+  function showGlobalMessage(msg, type){
+    const msgEl = document.createElement('div');
+    msgEl.className = `msg ${type}`;
+    msgEl.textContent = msg;
+    document.querySelector('.selector-card').appendChild(msgEl);
+  }
+
+  function loadTheme(){
+    if(localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('theme-dark');
+      document.querySelector('.theme-toggle-btn').innerHTML = '<i class="fas fa-moon"></i> Dark';
+    }
+  }
+
+  function toggleTheme(){
+    document.documentElement.classList.toggle('theme-dark');
+    const isDark = document.documentElement.classList.contains('theme-dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    document.querySelector('.theme-toggle-btn').innerHTML = isDark ? '<i class="fas fa-moon"></i> Dark' : '<i class="fas fa-sun"></i> Light';
+  }
+
+  function renderSDGs(){
+    const html = sdgs.map(s=>`
+      <div class="sdg-chip">
+        <div class="sdg-num" style="background:${s.color};">${s.num}</div>
+        <div class="sdg-text">
+          <div class="sdg-name">SDG ${s.num}</div>
+          <div class="sdg-desc">${s.name}</div>
+        </div>
+      </div>
+    `).join('');
+    document.getElementById('sdg-display').innerHTML = html;
+  }
+
+  function updateClock(){
+    const now = new Date();
+    document.getElementById('clock').textContent = now.toLocaleString('en-IN', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+  }
+
+  function switchTab(name){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.querySelector(`.tab[data-tab="${name}"]`).classList.add('active');
+    document.getElementById(name).classList.add('active');
+  }
+
+  function toggleAbout(section){
+    const el = document.getElementById('about-' + section);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
+
+  // ============================================================
+  // DISTRICT SELECTION
+  // ============================================================
+  function changeDistrict(){
+    const code = document.getElementById('district-select').value;
+    if(!code) return;
+    current = DISTRICTS.find(d=>d.code===code);
+    renderDistrictOverview();
+    renderAIPanel();
+    fetchWeather(current);
+    fetchAirQuality(current);
+    switchTab('overview');
+  }
+
+  function districtDensity(d){
+    return Math.round(d.population / d.area_km2);
+  }
+
+  function tnAverage(field){
+    return DISTRICTS.reduce((s,x)=>s+x[field],0) / DISTRICTS.length;
+  }
+
+  function getDistrictRank(field, higherIsBetter=true){
+    const sorted = [...DISTRICTS].sort((a,b)=> higherIsBetter ? b[field]-a[field] : a[field]-b[field]);
+    return sorted.findIndex(d=>d.code===current.code) + 1;
+  }
+
+  function formatEstablished(dateStr){
+    const dt = new Date(dateStr);
+    if(isNaN(dt)) return dateStr;
+    return dt.toLocaleDateString('en-IN', {year:'numeric', month:'long', day:'numeric'});
+  }
+
+  // ============================================================
+  // OVERVIEW PANEL (real district.json fields only)
+  // ============================================================
+  function renderDistrictOverview(){
+    if(!current) return;
+
+    const density = districtDensity(current);
+    const tnAvgPop = Math.round(tnAverage('population'));
+    const tnAvgLit = tnAverage('literacy_pct').toFixed(1);
+    const tnAvgDensity = Math.round(DISTRICTS.reduce((s,x)=>s+districtDensity(x),0)/DISTRICTS.length);
+
+    const literacy = current.literacy_pct;
+    const literacyClass = literacy >= 80 ? 'literacy-good' : literacy >= 70 ? 'literacy-moderate' : 'literacy-poor';
+
+    const literacyNote = current.literacy_is_parent_estimate
+      ? `<div class="note" style="font-size:11.5px;color:var(--tn-gold);margin-top:6px;">📌 ${current.name} was formed after the 2011 census, from ${current.parent_district}. This literacy figure is that undivided parent district's 2011 rate, shown as the closest available reference — not a rate specific to today's ${current.name} boundaries.</div>`
+      : `<div class="note" style="font-size:11.5px;color:var(--text-muted);margin-top:6px;">Census 2011 — India's most recent literacy census.</div>`;
+
+    const html = `
+      <div class="district-header">
+        <h1>${current.name} District</h1>
+        <p>📍 Headquarters: ${current.headquarters} | Established: ${formatEstablished(current.established)}</p>
+        <div class="district-header-meta">
+          <div class="header-meta-item">
+            <div class="header-meta-label">Population</div>
+            <div class="header-meta-value">${(current.population/1000000).toFixed(2)}M</div>
+          </div>
+          <div class="header-meta-item">
+            <div class="header-meta-label">Area</div>
+            <div class="header-meta-value">${current.area_km2.toLocaleString('en-IN')} km²</div>
+          </div>
+          <div class="header-meta-item">
+            <div class="header-meta-label">Density</div>
+            <div class="header-meta-value">${density.toLocaleString('en-IN')} /km²</div>
+          </div>
+          <div class="header-meta-item">
+            <div class="header-meta-label">Literacy Rate</div>
+            <div class="header-meta-value">${current.literacy_pct}%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card accent">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value">${current.population.toLocaleString('en-IN')}</div>
+          <div class="stat-label">Total Population</div>
+        </div>
+        <div class="stat-card accent2">
+          <div class="stat-icon">📐</div>
+          <div class="stat-value">${current.area_km2.toLocaleString('en-IN')}</div>
+          <div class="stat-label">Area (km²)</div>
+        </div>
+        <div class="stat-card accent3">
+          <div class="stat-icon">🏙️</div>
+          <div class="stat-value">${density.toLocaleString('en-IN')}</div>
+          <div class="stat-label">People / km²</div>
+        </div>
+        <div class="stat-card accent">
+          <div class="stat-icon">📊</div>
+          <div class="stat-value">${current.literacy_pct}%</div>
+          <div class="stat-label">Literacy Rate</div>
+        </div>
+      </div>
+
+      <div class="data-section">
+        <div class="data-section-title">📈 How ${current.name} compares to the Tamil Nadu average</div>
+        <div class="data-grid-2">
+          <div class="data-card">
+            <div class="data-card-title">Population &amp; Density</div>
+            <div class="data-card-content">
+              <div class="data-row"><span class="data-row-label">This district</span><span class="data-row-value">${current.population.toLocaleString('en-IN')}</span></div>
+              <div class="data-row"><span class="data-row-label">TN average (38 districts)</span><span class="data-row-value">${tnAvgPop.toLocaleString('en-IN')}</span></div>
+              <div class="data-row"><span class="data-row-label">Density vs. TN average</span><span class="data-row-value" style="color:${density > tnAvgDensity ? 'var(--tn-maroon)' : 'var(--tn-green)'}">${density > tnAvgDensity ? '↑ Above' : '↓ Below'} (${tnAvgDensity.toLocaleString('en-IN')}/km² avg)</span></div>
+              <div class="data-row"><span class="data-row-label">Rank by population</span><span class="data-row-value">#${getDistrictRank('population')} of ${DISTRICTS.length}</span></div>
+            </div>
+          </div>
+          <div class="data-card">
+            <div class="data-card-title">Literacy</div>
+            <div class="data-card-content">
+              <div class="literacy-indicator ${literacyClass}">${current.literacy_pct}% literate</div>
+              <div class="data-row"><span class="data-row-label">TN average</span><span class="data-row-value">${tnAvgLit}%</span></div>
+              <div class="data-row"><span class="data-row-label">Rank by literacy</span><span class="data-row-value">#${getDistrictRank('literacy_pct')} of ${DISTRICTS.length}</span></div>
+              ${literacyNote}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-section">
+        <div class="data-section-title">💡 Key Insight</div>
+        <div class="comparison-note">📊 <strong>District Analysis:</strong> ${generateDistrictInsight(density, tnAvgDensity, tnAvgLit)}</div>
+      </div>
+
+      <div class="download-section">
+        <div class="data-section-title">📥 Export Data</div>
+        <button class="btn secondary" onclick="copyDistrictData()"><i class="fas fa-copy"></i> Copy Data</button>
+      </div>
+    `;
+
+    document.getElementById('overview-content').innerHTML = html;
+  }
+
+  function generateDistrictInsight(density, tnAvgDensity, tnAvgLit){
+    const literacy = current.literacy_pct;
+    const insights = [];
+
+    if(literacy >= 80) insights.push(`High literacy rate (${literacy}%) indicates a strong educational foundation.`);
+    else if(literacy >= 70) insights.push(`Moderate literacy rate (${literacy}%), close to the state picture — continued investment in schools would help.`);
+    else insights.push(`Literacy rate (${literacy}%) is meaningfully below the state average (${tnAvgLit}%) — this is a strong candidate for education-focused investment (SDG 4).`);
+
+    if(density > tnAvgDensity * 1.5) insights.push(`Population density (${density}/km²) is well above average, suggesting urban pressure on housing, transit, and waste management (SDG 11).`);
+    else if(density < tnAvgDensity * 0.5) insights.push(`Low population density (${density}/km²) suggests a largely rural character, where infrastructure reach (roads, healthcare access) matters more than density management.`);
+
+    if(current.literacy_is_parent_estimate) insights.push(`Note: this district was carved out after the 2011 census, so its literacy figure is inherited from its parent district and may not reflect the current boundary precisely.`);
+
+    return insights.join(' ');
+  }
+
+  function copyDistrictData(){
+    const content = document.getElementById('overview-content').innerText;
+    navigator.clipboard.writeText(content).then(() => {
+      showMessage('✓ District data copied to clipboard!', 'success');
+    });
+  }
+
+  // ============================================================
+  // WEATHER — OpenWeatherMap (live)
+  // ============================================================
+  async function fetchWeather(d){
+    const container = document.getElementById('weather-content');
+    container.innerHTML = '<div class="loading-inline"><div class="spinner"></div> Fetching live weather...</div>';
+
+    if(!OPENWEATHER_KEY || OPENWEATHER_KEY === 'YOUR_OPENWEATHERMAP_KEY'){
+      container.innerHTML = `
+        <div class="no-data">
+          <div class="no-data-icon">🌤️</div>
+          <div class="no-data-text">No OpenWeatherMap key configured yet.</div>
+          <div style="font-size:12.5px;color:var(--text-muted);">Get a free key at <a href="https://openweathermap.org/api" target="_blank" rel="noopener">openweathermap.org/api</a> and paste it into the <code>OPENWEATHER_KEY</code> constant near the top of the script in index.html.</div>
+        </div>`;
+      return;
+    }
+
+    try{
+      const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${d.lat}&lon=${d.lon}&appid=${OPENWEATHER_KEY}&units=metric`);
+      const w = await r.json();
+      if(!r.ok) throw new Error(w?.message || `HTTP ${r.status}`);
+
+      const condition = w.weather?.[0]?.main || '—';
+      const desc = w.weather?.[0]?.description || '';
+      const icon = w.weather?.[0]?.icon;
+      const iconUrl = icon ? `https://openweathermap.org/img/wn/${icon}@2x.png` : '';
+
+      container.innerHTML = `
+        <div class="weather-main-card">
+          <div style="display:flex;align-items:center;gap:16px;">
+            ${iconUrl ? `<img src="${iconUrl}" alt="${desc}" width="64" height="64">` : ''}
+            <div>
+              <div class="weather-temp">${Math.round(w.main.temp)}°C</div>
+              <div class="weather-condition">${condition}${desc ? ' — ' + desc : ''}</div>
+            </div>
+          </div>
+          <div class="weather-updated">📍 ${d.headquarters} · Feels like ${Math.round(w.main.feels_like)}°C</div>
+        </div>
+        <div class="weather-detail-grid">
+          <div class="weather-detail"><div class="label">Humidity</div><div class="value">${w.main.humidity}%</div></div>
+          <div class="weather-detail"><div class="label">Wind Speed</div><div class="value">${w.wind?.speed ?? '—'} m/s</div></div>
+          <div class="weather-detail"><div class="label">Pressure</div><div class="value">${w.main.pressure} hPa</div></div>
+          <div class="weather-detail"><div class="label">Visibility</div><div class="value">${w.visibility ? (w.visibility/1000).toFixed(1) + ' km' : '—'}</div></div>
+        </div>
+        <div class="info-box" style="margin-top:1.5rem;"><strong>📍 Data Source:</strong> OpenWeatherMap, live for ${d.headquarters}'s coordinates.</div>
+      `;
+    }catch(err){
+      container.innerHTML = `<div class="no-data"><div class="no-data-icon">⚠️</div><div class="no-data-text">Could not load weather: ${err.message}</div></div>`;
+    }
+  }
+
+  // ============================================================
+  // AIR QUALITY — WAQI (live)
+  // ============================================================
+  async function fetchAirQuality(d){
+    const container = document.getElementById('air-quality-content');
+    container.innerHTML = '<div class="loading-inline"><div class="spinner"></div> Fetching live air quality...</div>';
+
+    if(!WAQI_TOKEN || WAQI_TOKEN === 'YOUR_WAQI_TOKEN'){
+      container.innerHTML = `
+        <div class="no-data">
+          <div class="no-data-icon">💨</div>
+          <div class="no-data-text">No WAQI token configured yet.</div>
+          <div style="font-size:12.5px;color:var(--text-muted);">Get a free token at <a href="https://aqicn.org/data-platform/token/" target="_blank" rel="noopener">aqicn.org/data-platform/token</a> and paste it into the <code>WAQI_TOKEN</code> constant near the top of the script in index.html.</div>
+        </div>`;
+      return;
+    }
+
+    try{
+      // Try geo endpoint first, fall back to city search if it fails
+      let j = null;
+      let fetchError = null;
+
+      // Primary: geo-based lookup
+      try {
+        const r = await fetch(`https://api.waqi.info/feed/geo:${d.lat};${d.lon}/?token=${WAQI_TOKEN}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        j = await r.json();
+      } catch(e) {
+        fetchError = e;
+      }
+
+      // Fallback: search by city name if geo failed or returned non-ok
+      if (!j || j.status !== 'ok') {
+        try {
+          const r2 = await fetch(`https://api.waqi.info/feed/${encodeURIComponent(d.headquarters)}/?token=${WAQI_TOKEN}`);
+          if (!r2.ok) throw new Error(`HTTP ${r2.status}`);
+          const j2 = await r2.json();
+          if (j2.status === 'ok') j = j2;
+        } catch(e2) {
+          // keep original fetchError
+        }
+      }
+
+      if(!j || j.status !== 'ok'){
+        const reason = j?.data === 'Unknown station' || j?.data === 'station not found'
+          ? 'No CPCB monitoring station found near ' + d.name + '.'
+          : fetchError ? `Network error: ${fetchError.message}` : (j?.data || 'No data returned from WAQI.');
+        container.innerHTML = `
+          <div class="no-data">
+            <div class="no-data-icon">💨</div>
+            <div class="no-data-text">${reason}</div>
+            <div style="font-size:12.5px;color:var(--text-muted);margin-top:8px;">Rural districts often have fewer CPCB stations nearby. Check <a href="https://cpcb.nic.in/" target="_blank" rel="noopener">CPCB's own portal</a> or <a href="https://aqicn.org/map/india/tamil-nadu/" target="_blank" rel="noopener">WAQI India map</a> directly.</div>
+          </div>`;
+        return;
+      }
+
+      const aqi = j.data.aqi;
+      const {status, cls} = aqiStatus(aqi);
+      const pm25 = j.data.iaqi?.pm25?.v;
+      const pm10 = j.data.iaqi?.pm10?.v;
+      const no2 = j.data.iaqi?.no2?.v;
+      const stationName = j.data.city?.name || d.headquarters;
+      const updatedTime = j.data.time?.s ? new Date(j.data.time.s).toLocaleString('en-IN') : '—';
+
+      container.innerHTML = `
+        <div class="aqi-main-card aqi-${cls}">
+          <div class="aqi-label">Air Quality Index (AQI)</div>
+          <div class="aqi-value">${aqi}</div>
+          <div class="aqi-status">${status}</div>
+          <div class="aqi-last-update">📍 ${stationName} · Updated: ${updatedTime}</div>
+        </div>
+        <div class="pollutants-grid">
+          ${pm25!=null ? `<div class="pollutant-card"><div class="pollutant-name">PM2.5</div><div class="pollutant-value">${pm25}</div><div class="pollutant-unit">µg/m³</div></div>` : ''}
+          ${pm10!=null ? `<div class="pollutant-card"><div class="pollutant-name">PM10</div><div class="pollutant-value">${pm10}</div><div class="pollutant-unit">µg/m³</div></div>` : ''}
+          ${no2!=null ? `<div class="pollutant-card"><div class="pollutant-name">NO₂</div><div class="pollutant-value">${no2}</div><div class="pollutant-unit">ppb</div></div>` : ''}
+        </div>
+        <div class="info-box"><strong>📍 Data Source:</strong> WAQI, aggregating the nearest real CPCB ground monitoring station to ${d.name}'s coordinates. Station may be several km away in districts with fewer monitors.</div>
+      `;
+    }catch(err){
+      container.innerHTML = `<div class="no-data"><div class="no-data-icon">⚠️</div><div class="no-data-text">Could not load air quality: ${err.message}</div></div>`;
+    }
+  }
+
+  function aqiStatus(aqi){
+    if(aqi <= 50) return {status:'✓ Good', cls:'good'};
+    if(aqi <= 100) return {status:'○ Moderate', cls:'moderate'};
+    if(aqi <= 150) return {status:'⚠ Unhealthy for Sensitive Groups', cls:'unhealthy-sensitive'};
+    if(aqi <= 200) return {status:'⚠ Unhealthy', cls:'unhealthy'};
+    if(aqi <= 300) return {status:'⚠⚠ Very Unhealthy', cls:'very-unhealthy'};
+    return {status:'⚠⚠⚠ Hazardous', cls:'hazardous'};
+  }
+
+  // ============================================================
+  // WATER & ENERGY RESOURCES — static official links (no public API exists)
+  // ============================================================
+  function renderResourcesPanel(){
+    const html = `
+      <h2 style="font-size:16px;margin-bottom:1rem;">💧 Water &amp; Energy Resources</h2>
+      <div class="info-box">
+        <strong>Why links, not live numbers:</strong> Tamil Nadu's water and power authorities don't publish a public, browser-callable API for reservoir levels or live electricity demand. Rather than guess or scrape their dashboards, this tab links straight to the real official sources.
+      </div>
+      <div class="link-card">
+        <div><a href="https://twadboard.tn.gov.in" target="_blank" rel="noopener">TWAD Board — Tamil Nadu Water Supply</a><div class="desc">Official state drinking water & drainage board</div></div>
+        <i class="fas fa-arrow-up-right-from-square"></i>
+      </div>
+      <div class="link-card">
+        <div><a href="https://indiawris.gov.in/wris/#/reservoir" target="_blank" rel="noopener">India-WRIS — Reservoir Dashboard</a><div class="desc">Live reservoir/dam levels, Central Water Commission</div></div>
+        <i class="fas fa-arrow-up-right-from-square"></i>
+      </div>
+      <div class="link-card">
+        <div><a href="https://mausam.imd.gov.in" target="_blank" rel="noopener">IMD — Rainfall Data</a><div class="desc">India Meteorological Department</div></div>
+        <i class="fas fa-arrow-up-right-from-square"></i>
+      </div>
+      <div class="link-card">
+        <div><a href="https://www.tangedco.gov.in" target="_blank" rel="noopener">TANGEDCO</a><div class="desc">Tamil Nadu electricity generation & distribution</div></div>
+        <i class="fas fa-arrow-up-right-from-square"></i>
+      </div>
+      <div class="link-card">
+        <div><a href="https://posoco.in" target="_blank" rel="noopener">POSOCO / Grid-India</a><div class="desc">Live national electricity grid demand</div></div>
+        <i class="fas fa-arrow-up-right-from-square"></i>
+      </div>
+    `;
+    document.getElementById('resources-content').innerHTML = html;
+  }
+
+  // ============================================================
+  // AI INSIGHTS — Gemini API (live)
+  // ============================================================
+  function renderAIPanel(){
+    if(!current) return;
+    const otherDistricts = DISTRICTS.filter(d=>d.code!==current.code);
+    const html = `
+      <h2 style="font-size:16px;margin-bottom:1rem;"><strong>${current.name}</strong> — AI Insights</h2>
+
+      <p style="font-size:13.5px;color:var(--text-secondary);margin-bottom:1rem;">
+        Powered by the Gemini API. This is a decision-support assistant: it reasons and recommends using the real data shown, plus general knowledge — it isn't limited to reciting numbers. Your API key stays only in this browser tab for this session; it is never saved to disk.
+      </p>
+
+      <div class="form-group" style="margin-bottom:1rem;">
+        <label for="anthropic-key-input">Your Google Gemini API Key</label>
+        <div class="ai-key-row">
+          <input type="password" id="anthropic-key-input" placeholder="Paste your Gemini API key (AIza...)" value="${geminiKey}">
+          <button class="btn secondary small" onclick="saveKey()">Use this key</button>
+        </div>
+      </div>
+
+      <h3 class="section-heading">Quick Questions</h3>
+      <div class="ai-presets-group">
+        <div class="ai-presets-group-title">📋 Development & Planning</div>
+        <div class="ai-presets">
+          <button class="ai-preset" onclick="askAI('What are the biggest development priorities for this district right now, and what concrete steps would you recommend?')">Development plan</button>
+          <button class="ai-preset" onclick="askAI('How does this district compare to the Tamil Nadu average on literacy and population density, and what does that suggest for policy?')">Compare to TN average</button>
+          <button class="ai-preset" onclick="askAI('What infrastructure investments would be most impactful for this district given its current demographics?')">Infrastructure needs</button>
+        </div>
+      </div>
+
+      <div class="ai-presets-group">
+        <div class="ai-presets-group-title">🌱 Sustainability & Environment</div>
+        <div class="ai-presets">
+          <button class="ai-preset" onclick="askAI('What environmental and sustainability priorities should this district focus on?')">Green priorities</button>
+          <button class="ai-preset" onclick="askAI('How can this district work towards the UN Sustainable Development Goals?')">SDG roadmap</button>
+          <button class="ai-preset" onclick="askAI('What measures should be taken to improve air quality in this district based on current pollution levels?')">Air quality action plan</button>
+        </div>
+      </div>
+
+      <div class="ai-presets-group">
+        <div class="ai-presets-group-title">📊 Custom Analysis</div>
+        <div class="form-group" style="margin-bottom:10px;max-width:320px;">
+          <label for="compare-select">Compare with another district (optional)</label>
+          <select id="compare-select" onchange="updateCompareDisplay()">
+            <option value="">— None —</option>
+            ${otherDistricts.map(x=>`<option value="${x.code}">${x.name}</option>`).join('')}
+          </select>
+        </div>
+        <div id="compare-display"></div>
+        <textarea id="ai-input" rows="3" placeholder="Ask anything about ${current.name} district, e.g. 'compare this with ${otherDistricts[0]?.name || 'another district'} for setting up a new school'" style="margin-bottom:8px;"></textarea>
+        <button class="btn" onclick="askAI()" style="margin-bottom:1rem;">Ask AI</button>
+      </div>
+
+      <div class="ai-response-container" id="ai-response-container"></div>
+      <div id="ai-history-container"></div>
+    `;
+    document.getElementById('ai-panel-content').innerHTML = html;
+    renderQueryHistory();
+  }
+
+  function updateCompareDisplay(){
+    const code = document.getElementById('compare-select').value;
+    const container = document.getElementById('compare-display');
+    if(!code){
+      container.innerHTML = '';
+      followupSuggestions = [];
+      return;
+    }
+    const dist = DISTRICTS.find(d=>d.code===code);
+    container.innerHTML = `
+      <div class="compare-badge">
+        <i class="fas fa-code-branch"></i> Comparing with: <strong>${dist.name}</strong>
+        <span class="compare-badge-close" onclick="document.getElementById('compare-select').value='';updateCompareDisplay();">✕</span>
+      </div>
+    `;
+  }
+
+  function saveKey(){
+    const val = document.getElementById('anthropic-key-input').value.trim();
+    geminiKey = val;
+    if(!val){
+      showMessage('Key cleared.', 'info');
+    } else if(!val.startsWith('AIza')){
+      showMessage('⚠️ This doesn\'t look like a Gemini key (should start with AIza...). Double-check and try again.', 'error');
+    } else {
+      showMessage('✓ Gemini key set for this session (not saved to disk).', 'success');
+    }
+  }
+
+  function districtDataBlock(x){
+    const density = districtDensity(x);
+    return `- ${x.name} district — Headquarters: ${x.headquarters}; Population: ${x.population.toLocaleString('en-IN')}; Area: ${x.area_km2} km²; Density: ${density} people/km²; Literacy: ${x.literacy_pct}%${x.literacy_is_parent_estimate ? ` (2011 figure, inherited from parent district ${x.parent_district})` : ' (Census 2011)'}; Formed: ${formatEstablished(x.established)}`;
+  }
+
+  async function askAI(preset){
+    const d = current;
+    const inputEl = document.getElementById('ai-input');
+    const q = preset || inputEl.value.trim();
+    if(!q) return;
+
+    if(!preset) inputEl.value = '';
+    // Always read from input field so user doesn't need to click "Use this key" first
+    const typedKey = document.getElementById('anthropic-key-input')?.value.trim();
+    if(typedKey) geminiKey = typedKey;
+
+    const responseContainer = document.getElementById('ai-response-container');
+    responseContainer.innerHTML = `
+      <div class="ai-response loading">
+        <div class="loading-spinner"><div class="spinner"></div><span>Thinking…</span></div>
+      </div>
+    `;
+
+    if(!geminiKey){
+      responseContainer.innerHTML = `<div class="ai-response" style="display:block;color:var(--tn-red);background:var(--tn-red-bg);">⚠️ Please paste your Gemini API key above and click "Use this key" first.</div>`;
+      return;
+    }
+
+    const compareCode = document.getElementById('compare-select')?.value || '';
+    const mentioned = DISTRICTS.filter(x =>
+      x.code !== d.code && (x.code === compareCode || new RegExp(`\\b${x.name}\\b`,'i').test(q))
+    );
+    const relevantDistricts = [d, ...mentioned];
+
+    const dataBlock = relevantDistricts.map(districtDataBlock).join('\n');
+    const tnAvgPop = Math.round(tnAverage('population'));
+    const tnAvgLit = tnAverage('literacy_pct').toFixed(1);
+
+    const systemPrompt = `You are the AI decision-support engine for a Tamil Nadu district digital twin dashboard, built for a school AI project. Your job is to give real, useful, opinionated analysis and recommendations — not just recite numbers back.
+
+REAL DATA YOU HAVE (Government of Tamil Nadu district data + Census 2011 literacy):
+${dataBlock}
+
+Tamil Nadu district averages for reference (38 districts): population ~${tnAvgPop.toLocaleString('en-IN')}, literacy ~${tnAvgLit}%.
+
+HOW TO ANSWER:
+- If the question compares districts, directly compare the numbers above for each named district, point out the meaningful differences, and give a clear recommendation or conclusion — don't just restate both sets of numbers.
+- If asked for a development plan, priorities, or recommendations: actually give one. Use the real data above as your starting evidence (e.g. low literacy → prioritize schools; high density → prioritize housing/transit/waste management), then reason further using general knowledge of Indian district administration, infrastructure, and public policy. Give 3-5 concrete, specific recommendations, not vague generalities.
+- Clearly distinguish real data from your own reasoning, e.g. "Given the literacy rate of X%, I'd recommend..." vs "Based on general best practice for districts of this density...". Never present a guess as if it were an official figure.
+- Only say "I don't have that data" for things no reasonable district-level reasoning could address (e.g. an exact live reservoir level right now) — never use it as a way to avoid giving an opinion or recommendation.
+- Write like a knowledgeable planning advisor: direct, specific, and actionable. Use short paragraphs or a brief bulleted list. Aim for 150-250 words.
+- Use markdown formatting with headers (##), **bold**, and - bullet points for readability.`;
+
+    try{
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ role: 'user', parts: [{ text: q }] }],
+          generationConfig: { maxOutputTokens: 800 }
+        })
+      });
+
+      const data = await r.json();
+      if(!r.ok){
+        throw new Error(data?.error?.message || `API error (${r.status})`);
+      }
+
+      const text = (data.candidates?.[0]?.content?.parts || [])
+        .map(part => part.text || '')
+        .join('\n');
+
+      if(!text){
+        throw new Error('Empty response from Gemini' + (data.candidates?.[0]?.finishReason ? ` (${data.candidates[0].finishReason})` : ''));
+      }
+
+      const htmlContent = marked.parse(text);
+      followupSuggestions = generateFollowups(q);
+      addToHistory(q, text);
+
+      responseContainer.innerHTML = `
+        <div class="ai-response" style="display:block;">
+          <div>${htmlContent}</div>
+          <div class="ai-response-actions">
+            <button onclick="copyResponse()"><i class="fas fa-copy"></i> Copy</button>
+            <button onclick="exportResponse()"><i class="fas fa-download"></i> Export</button>
+          </div>
+          ${followupSuggestions.length > 0 ? `
+            <div class="followup-section">
+              <div class="followup-title">💡 Suggested follow-ups</div>
+              ${followupSuggestions.map(f=>`<button class="followup-btn" onclick="askAI('${f.replace(/'/g,"\\'")}')"><i class="fas fa-arrow-right"></i> ${f}</button>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }catch(err){
+      responseContainer.innerHTML = `<div class="ai-response" style="display:block;color:var(--tn-red);background:var(--tn-red-bg);">❌ Error: ${err.message}</div>`;
+    }
+  }
+
+  function generateFollowups(originalQuestion){
+    const suggestions = [];
+    const lower = originalQuestion.toLowerCase();
+
+    if(lower.includes('development') || lower.includes('plan')){
+      suggestions.push('What are the main barriers to implementing these recommendations?');
+      suggestions.push('How much funding would these priorities require?');
+    }
+    if(lower.includes('compare')){
+      suggestions.push('What can ' + current.name + ' learn from the better-performing district?');
+      suggestions.push('What are the unique advantages of ' + current.name + ' in this area?');
+    }
+    if(lower.includes('literacy') || lower.includes('education')){
+      suggestions.push('What are the best practices for improving literacy in rural areas?');
+      suggestions.push('Which schools or institutions should be prioritized for investment?');
+    }
+    if(lower.includes('infrastructure')){
+      suggestions.push('What timeline and phasing would be realistic for these infrastructure projects?');
+      suggestions.push('Are there quick wins that could be implemented in the next 1-2 years?');
+    }
+
+    if(suggestions.length === 0){
+      suggestions.push('How does ' + current.name + ' compare to other districts?');
+      suggestions.push('What would be the expected impact of these recommendations?');
+      suggestions.push('Are there examples of similar districts that have successfully implemented this?');
+    }
+
+    return suggestions.slice(0, 3);
+  }
+
+  function addToHistory(query, response){
+    const entry = {
+      query: query.length > 60 ? query.substring(0, 60) + '...' : query,
+      fullQuery: query,
+      response: response,
+      timestamp: new Date().toISOString(),
+      district: current.name
+    };
+
+    queryHistory.unshift(entry);
+    queryHistory = queryHistory.slice(0, 20);
+    localStorage.setItem('ai-history', JSON.stringify(queryHistory));
+    renderQueryHistory();
+  }
+
+  function renderQueryHistory(){
+    let container = document.getElementById('ai-history-container');
+    if(!container) return;
+    if(queryHistory.length === 0){ container.innerHTML = ''; return; }
+
+    container.innerHTML = `
+      <div class="ai-history">
+        <h3 class="section-heading" style="margin-top:0;">📜 Recent Queries</h3>
+        ${queryHistory.slice(0, 5).map(item => {
+          const time = new Date(item.timestamp);
+          const timeStr = time.toLocaleString('en-IN', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+          return `
+            <div class="history-item" onclick="askAI('${item.fullQuery.replace(/'/g,"\\'")}')">
+              <div class="history-item-query">${item.query}</div>
+              <div class="history-item-time">${item.district} · ${timeStr}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  function copyResponse(){
+    const respEl = document.querySelector('.ai-response');
+    navigator.clipboard.writeText(respEl.innerText).then(() => {
+      showMessage('✓ Copied to clipboard', 'success');
+    });
+  }
+
+  function exportResponse(){
+    const respEl = document.querySelector('.ai-response');
+    const text = respEl.innerText;
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', `insight-${current.name}-${new Date().toISOString().split('T')[0]}.txt`);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    showMessage('✓ Downloaded', 'success');
+  }
+
+  function showMessage(msg, type){
+    const msgEl = document.createElement('div');
+    msgEl.className = `msg ${type}`;
+    msgEl.textContent = msg;
+    document.querySelector('.selector-card').appendChild(msgEl);
+    setTimeout(() => msgEl.remove(), 3000);
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
